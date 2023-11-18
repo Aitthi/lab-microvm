@@ -1,0 +1,21 @@
+[package]
+name = "lab-firecracker"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[patch.crates-io]
+kvm-bindings = { git = "https://github.com/firecracker-microvm/kvm-bindings", tag = "v0.6.0-2", features = ["fam-wrappers"] }
+
+[dependencies]
+vmm = { git = "https://github.com/firecracker-microvm/firecracker.git" } 
+utils = { git = "https://github.com/firecracker-microvm/firecracker.git" } 
+seccompiler = { git = "https://github.com/firecracker-microvm/firecracker.git" } 
+log-instrument = { git = "https://github.com/firecracker-microvm/firecracker.git", optional = true }
+snapshot = { git = "https://github.com/firecracker-microvm/firecracker.git" }
+event-manager = "0.3.0"
+timerfd = "1.5.0"
+
+[features]
+tracing = ["log-instrument", "seccompiler/tracing", "snapshot/tracing", "utils/tracing", "vmm/tracing"]
