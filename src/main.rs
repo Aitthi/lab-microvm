@@ -36,12 +36,18 @@ fn main() {
     vm_resources.boot_timer = boot_timer_enabled;
     // println!("vm_resources: {:#?}", vm_resources);
 
-    let r_vmm = vmm::builder::build_and_boot_microvm(
+    let r_vmm = match vmm::builder::build_and_boot_microvm(
         &instance_info,
         &vm_resources,
         &mut event_manager,
         &seccomp_filters,
-    ).unwrap();
+    ) {
+        Ok(vmm) => vmm,
+        Err(e) => {
+            println!("Failed to build microvm: {:?}", e);
+            std::process::exit(0);
+        }   
+    };
 
     // let r_vmma = r_vmm.clone();
     // thread::spawn(move || {
