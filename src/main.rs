@@ -1,8 +1,8 @@
 mod metrics;
-use std::sync::{Arc, Mutex};
-use event_manager::SubscriberOps;
+mod add_subscriber;
+use std::sync::Arc;
 use seccompiler::BpfThreadMap;
-use vmm::{vmm_config::instance_info::{InstanceInfo, VmState}, resources::VmResources, logger::info, EventManager, FcExitCode};
+use vmm::{vmm_config::instance_info::{InstanceInfo, VmState}, resources::VmResources, logger::info, FcExitCode, EventManager};
 
 /// Default byte limit of accepted http requests on API and MMDS servers.
 pub const HTTP_MAX_PAYLOAD_SIZE: usize = 51200;
@@ -23,9 +23,8 @@ fn main() {
 
     let boot_timer_enabled = false;
     let mmds_size_limit = HTTP_MAX_PAYLOAD_SIZE;
-    let mut event_manager = EventManager::new().expect("Unable to create EventManager");
-    let firecracker_metrics = Arc::new(Mutex::new(metrics::PeriodicMetrics::new()));
-    event_manager.add_subscriber(firecracker_metrics.clone());
+    let mut event_manager = EventManager::new().unwrap();
+    let firecracker_metrics = add_subscriber::add_subscriber(&mut event_manager);
 
     println!("instance_info: {:#?}", instance_info);
 
@@ -50,15 +49,15 @@ fn main() {
     };
 
     // let r_vmma = r_vmm.clone();
-    // thread::spawn(move || {
-    //     // 10s shutdown
-    //     thread::sleep(Duration::from_secs(10));
-    //     println!("\nsleep 10s, then pause_vm and stop");
-    //     let mut vmm = r_vmma.lock().unwrap();
-    //     vmm.pause_vm().expect("pause_vm failed");
-    //     println!("\npause_vm success");
-    //     vmm.stop(FcExitCode::Ok);
-    //     std::process::exit(0);
+    // std::thread::spawn(move || {
+        // 10s shutdown
+        // thread::sleep(Duration::from_secs(10));
+        // println!("\nsleep 10s, then pause_vm and stop");
+        // let mut vmm = r_vmma.lock().unwrap();
+        // vmm.pause_vm().expect("pause_vm failed");
+        // println!("\npause_vm success");
+        // vmm.stop(FcExitCode::Ok);
+        // std::process::exit(0);
     // });
     
     info!("Successfully started microvm that was configured from one single json");
