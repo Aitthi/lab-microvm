@@ -33,6 +33,7 @@ sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
 iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 iptables -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 iptables -A FORWARD -i tap0 -o eth0 -j ACCEPT
+```
 
 ### KVM
 
@@ -40,6 +41,7 @@ Firecracker requires [the KVM Linux kernel module](https://www.linux-kvm.org/).
 
 The presence of the KVM module can be checked with:
 
+```bash
 lsmod | grep kvm
 ```
 
