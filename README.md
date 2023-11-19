@@ -39,3 +39,16 @@ ccp                   118784  1 kvm_amd
 kvm                  1142784  1 kvm_amd
 irqbypass              16384  1 kvm
 ```
+
+# Running
+```sh
+# build kernel and rootfs
+chmod +x ./script/build_image.sh
+./script/build_image.sh rootfs
+./script/build_image.sh kernel
+```
+
+```sh
+# run
+cargo run
+```
