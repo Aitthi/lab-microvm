@@ -26,14 +26,34 @@ function build_alpine_rootfs {
     rm -f $BASE_DIR/rootfs.ext4
     dd if=/dev/zero of=$BASE_DIR/rootfs.ext4 bs=1M count=1000
     mkfs.ext4 $BASE_DIR/rootfs.ext4
-    mkdir -p /tmp/my-rootfs
-    mount $BASE_DIR/rootfs.ext4 /tmp/my-rootfs
+    rootfs=/tmp/my-rootfs
+    mkdir -p $rootfs
+    mount $BASE_DIR/rootfs.ext4 $rootfs
+
+    # Generate key for ssh access from host
+    if [ ! -s id_rsa ]; then
+        ssh-keygen -f id_rsa -N ""
+    fi
+    sudo install -d -m 0600 "$rootfs/root/.ssh/"
+    sudo mv id_rsa.pub "$rootfs/root/.ssh/authorized_keys"
+    id_rsa=$OUTPUT_DIR/id_rsa
+    sudo mv id_rsa $id_rsa
+
+    KERNEL_VERSION=$(grep -Po "^# Linux\/\w+ \K(\d+\.\d+\.\d+)" "$BASE_DIR/linux/.config")
+
+    mkdir -p $rootfs/lib/modules/$KERNEL_VERSION
+    cp $BASE_DIR/linux/modules.builtin $rootfs/lib/modules/$KERNEL_VERSION
+    cp $BASE_DIR/linux/modules.builtin.modinfo $rootfs/lib/modules/$KERNEL_VERSION
+    touch $rootfs/lib/modules/$KERNEL_VERSION/modules.dep
 
     docker run -i --rm \
-        -v /tmp/my-rootfs:/my-rootfs \
+        -v $rootfs:/my-rootfs \
+        -v $PWD/rootfs:/rootfs \
+        --privileged \
         alpine sh < setup-alpine.sh
 
-    umount /tmp/my-rootfs
+    umount $rootfs
+    
     cp $BASE_DIR/rootfs.ext4 $BASE_DIR/x86_64/alpine.ext4
 }
 
