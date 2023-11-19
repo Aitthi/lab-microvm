@@ -40,7 +40,6 @@ Firecracker requires [the KVM Linux kernel module](https://www.linux-kvm.org/).
 
 The presence of the KVM module can be checked with:
 
-```bash
 lsmod | grep kvm
 ```
 
