@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # fail if we encounter an error, uninitialized variable or a pipe breaks
+EXEC=$1
 set -eu -o pipefail
 
 set -x
@@ -106,13 +107,16 @@ function build_linux {
 #### main ####
 install_dependencies
 
+if [ $EXEC == "rootfs" ]; then
 # from docker image
 build_alpine_rootfs
+fi
 
 # linux kernel
+if [ $EXEC == "kernel" ]; then
 build_linux $PWD/guest_configs/microvm-kernel-ci-$ARCH-6.1.config
 # if [ $ARCH == "aarch64" ]; then
 #     build_linux $PWD/guest_configs/microvm-kernel-ci-$ARCH-5.10-no-sve.config vmlinux-no-sve
 # fi
-
+fi
 tree -h $OUTPUT_DIR
