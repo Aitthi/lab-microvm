@@ -21,53 +21,6 @@ function install_dependencies {
     sudo apt install -y bc flex bison gcc make libelf-dev libssl-dev squashfs-tools busybox-static tree cpio curl
 }
 
-# Build a rootfs
-function build_alpine_rootfs {
-    rm -f $BASE_DIR/rootfs.ext4
-    dd if=/dev/zero of=$BASE_DIR/rootfs.ext4 bs=1M count=1000
-    mkfs.ext4 $BASE_DIR/rootfs.ext4
-    rootfs=/tmp/my-rootfs
-    mkdir -p $rootfs
-    mount $BASE_DIR/rootfs.ext4 $rootfs
-
-    # Generate key for ssh access from host
-    if [ ! -s id_rsa ]; then
-        ssh-keygen -f id_rsa -N ""
-    fi
-    sudo install -d -m 0600 "$rootfs/root/.ssh/"
-    sudo mv id_rsa.pub "$rootfs/root/.ssh/authorized_keys"
-    id_rsa=$OUTPUT_DIR/id_rsa
-    sudo mv id_rsa $id_rsa
-
-    KERNEL_VERSION=$(grep -Po "^# Linux\/\w+ \K(\d+\.\d+\.\d+)" "$BASE_DIR/linux/.config")
-
-    mkdir -p $rootfs/lib/modules/$KERNEL_VERSION/kernel
-    cp $BASE_DIR/linux/modules.builtin $rootfs/lib/modules/$KERNEL_VERSION
-    cp $BASE_DIR/linux/modules.builtin.modinfo $rootfs/lib/modules/$KERNEL_VERSION
-    cp $BASE_DIR/linux/modules.order $rootfs/lib/modules/$KERNEL_VERSION
-
-    # temp
-    cp $BASE_DIR/linux/scripts/depmod.sh $rootfs/
-    cp $BASE_DIR/linux/System.map $rootfs/
-
-    docker run -i --rm \
-        -v $rootfs:/my-rootfs \
-        -v $PWD/rootfs:/rootfs \
-        -e KERNEL_VERSION=$KERNEL_VERSION \
-        --privileged \
-        alpine sh < modules.sh
-
-    docker run -i --rm \
-        -v $rootfs:/my-rootfs \
-        -v $PWD/rootfs:/rootfs \
-        --privileged \
-        alpine sh < setup-alpine.sh
-
-    umount $rootfs
-    
-    cp $BASE_DIR/rootfs.ext4 $BASE_DIR/x86_64/alpine.ext4
-}
-
 function get_linux_git {
     # git clone -s -b v$KV ../../linux
     # --depth 1
@@ -135,6 +88,54 @@ function build_linux {
     make modules
     popd &>/dev/null
 }
+
+# Build a rootfs for Alpine Linux
+function build_alpine_rootfs {
+    rm -f $BASE_DIR/rootfs.ext4
+    dd if=/dev/zero of=$BASE_DIR/rootfs.ext4 bs=1M count=1000
+    mkfs.ext4 $BASE_DIR/rootfs.ext4
+    rootfs=/tmp/my-rootfs
+    mkdir -p $rootfs
+    mount $BASE_DIR/rootfs.ext4 $rootfs
+
+    # Generate key for ssh access from host
+    if [ ! -s id_rsa ]; then
+        ssh-keygen -f id_rsa -N ""
+    fi
+    sudo install -d -m 0600 "$rootfs/root/.ssh/"
+    sudo mv id_rsa.pub "$rootfs/root/.ssh/authorized_keys"
+    id_rsa=$OUTPUT_DIR/id_rsa
+    sudo mv id_rsa $id_rsa
+
+    KERNEL_VERSION=$(grep -Po "^# Linux\/\w+ \K(\d+\.\d+\.\d+)" "$BASE_DIR/linux/.config")
+
+    mkdir -p $rootfs/lib/modules/$KERNEL_VERSION/kernel
+    cp $BASE_DIR/linux/modules.builtin $rootfs/lib/modules/$KERNEL_VERSION
+    cp $BASE_DIR/linux/modules.builtin.modinfo $rootfs/lib/modules/$KERNEL_VERSION
+    cp $BASE_DIR/linux/modules.order $rootfs/lib/modules/$KERNEL_VERSION
+
+    # temp
+    cp $BASE_DIR/linux/scripts/depmod.sh $rootfs/
+    cp $BASE_DIR/linux/System.map $rootfs/
+
+    docker run -i --rm \
+        -v $rootfs:/my-rootfs \
+        -v $PWD/rootfs:/rootfs \
+        -e KERNEL_VERSION=$KERNEL_VERSION \
+        --privileged \
+        alpine sh < modules.sh
+
+    docker run -i --rm \
+        -v $rootfs:/my-rootfs \
+        -v $PWD/rootfs:/rootfs \
+        --privileged \
+        alpine sh < setup-alpine.sh
+
+    umount $rootfs
+    
+    cp $BASE_DIR/rootfs.ext4 $BASE_DIR/x86_64/alpine.ext4
+}
+
 
 #### main ####
 install_dependencies
