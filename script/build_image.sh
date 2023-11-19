@@ -41,10 +41,21 @@ function build_alpine_rootfs {
 
     KERNEL_VERSION=$(grep -Po "^# Linux\/\w+ \K(\d+\.\d+\.\d+)" "$BASE_DIR/linux/.config")
 
-    mkdir -p $rootfs/lib/modules/$KERNEL_VERSION
+    mkdir -p $rootfs/lib/modules/$KERNEL_VERSION/kernel
     cp $BASE_DIR/linux/modules.builtin $rootfs/lib/modules/$KERNEL_VERSION
     cp $BASE_DIR/linux/modules.builtin.modinfo $rootfs/lib/modules/$KERNEL_VERSION
-    touch $rootfs/lib/modules/$KERNEL_VERSION/modules.dep
+    cp $BASE_DIR/linux/modules.order $rootfs/lib/modules/$KERNEL_VERSION
+
+    # temp
+    cp $BASE_DIR/linux/scripts/depmod.sh $rootfs/
+    cp $BASE_DIR/linux/System.map $rootfs/
+
+    docker run -i --rm \
+        -v $rootfs:/my-rootfs \
+        -v $PWD/rootfs:/rootfs \
+        -e KERNEL_VERSION=$KERNEL_VERSION \
+        --privileged \
+        alpine sh < modules.sh
 
     docker run -i --rm \
         -v $rootfs:/my-rootfs \
@@ -121,6 +132,7 @@ function build_linux {
     OUTPUT_FILE=$OUTPUT_DIR/vmlinux-$LATEST_VERSION$flavour
     cp -v $binary_path $OUTPUT_FILE
     cp -v .config $OUTPUT_FILE.config
+    make modules
     popd &>/dev/null
 }
 
