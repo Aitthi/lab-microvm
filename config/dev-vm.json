@@ -1,6 +1,6 @@
 {
   "boot-source": {
-    "kernel_image_path": "./fs_img/vmlinux-6.1.62",
+    "kernel_image_path": "./fs_img/x86_64/vmlinux-6.1.62",
     "boot_args": "console=ttyS0 reboot=k panic=1 pci=off",
     "initrd_path": null
   },

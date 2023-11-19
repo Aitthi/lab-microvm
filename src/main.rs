@@ -30,7 +30,7 @@ fn main() {
     println!("instance_info: {:#?}", instance_info);
 
     // read dev-vm.json
-    let config_json = std::fs::read_to_string("dev-vm.json").unwrap();
+    let config_json = std::fs::read_to_string("config/dev-vm.json").unwrap();
     // println!("config_json: {:#?}", config_json);
     let mut vm_resources = VmResources::from_json(&config_json, &instance_info, mmds_size_limit, None).unwrap();
     vm_resources.boot_timer = boot_timer_enabled;
